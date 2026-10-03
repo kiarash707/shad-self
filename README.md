@@ -302,3 +302,34 @@ systemctl restart shad-self
 ---
 
 **Shad Self KIA — Simple, Fast & Self.**
+
+## 🛡️ Operations Dashboard
+
+The project includes a production-oriented FastAPI dashboard at `/`.
+
+Railway runtime configuration:
+
+- `AIOSHAD_PHONE` — Shad account phone number. Required for the bot to authenticate.
+- `DASHBOARD_TOKEN` — required secret for dashboard operations.
+- `SHAD_DATA_DIR` — persistent data directory; defaults to `./data`.
+- Railway volume should be mounted at `/app/data`.
+
+Endpoints:
+
+- `/health` — public liveness check
+- `/ready` — runtime readiness
+- `/api/status` — authenticated runtime status
+- `/api/backup` — authenticated backup creation
+- `/api/backups` — authenticated backup inventory
+- `/api/restore` — authenticated validated restore
+- `/api/restart` — authenticated bot restart
+
+Backups contain runtime/session state only. Environment secrets are never included. Restore validates ZIP integrity, manifest, file count, uncompressed size, path traversal, symlinks, and SHA-256 checksums before replacing session state.
+
+For Railway, the service start command is:
+
+```bash
+uvicorn dashboard:app --host 0.0.0.0 --port $PORT
+```
+
+The dashboard is intentionally locked until `DASHBOARD_TOKEN` is configured.
