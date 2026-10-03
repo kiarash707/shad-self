@@ -3,6 +3,7 @@ import hashlib
 import json
 import os
 import shutil
+import time
 import tempfile
 import zipfile
 from datetime import datetime, timezone
@@ -161,6 +162,7 @@ def restore_archive(path: Path) -> dict:
         if SESSION_PATH.exists():
             safety = DATA_PATH / f"sessions-safety-{datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')}"
             os.replace(SESSION_PATH, safety)
+        (temp_dir / "sessions").mkdir(parents=True, exist_ok=True)
         os.replace(temp_dir / "sessions", SESSION_PATH)
         return {**result, "restored": True, "safety_backup": str(safety) if safety else None}
     except Exception:
@@ -222,7 +224,7 @@ async def status(x_dashboard_token: str | None = Header(default=None)):
     return {
         "version": APP_VERSION,
         "connected": bool(shad_client.is_connected),
-        "uptime_seconds": int(asyncio.get_running_loop().time() - STATE["start"] if STATE.get("start") else 0),
+        "uptime_seconds": max(0, int(time.time() - STATE["start"])),
         "messages": STATE["msgs"],
         "commands": STATE["commands"],
         "commit": os.getenv("RAILWAY_GIT_COMMIT_SHA"),
