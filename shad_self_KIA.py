@@ -3,6 +3,7 @@ import logging
 import os
 import random
 import re
+import sys
 import time
 from datetime import datetime
 
@@ -15,6 +16,11 @@ from aioshad import (
     InvalidSessionError,
 )
 from aioshad import filters
+
+APP_VERSION = "2.0.0"
+DATA_DIR = os.getenv("SHAD_DATA_DIR", "./data")
+SESSION_DIR = os.path.join(DATA_DIR, "sessions")
+os.makedirs(SESSION_DIR, exist_ok=True)
 
 PREFIX = "/"
 TIME_FORMAT = "⏰ {time}"
@@ -124,11 +130,13 @@ KNOWN_COMMANDS = {
 }
 KNOWN_COMMANDS_LOWER = {k.lower() for k in KNOWN_COMMANDS}
 
-PHONE = os.getenv("AIOSHAD_PHONE") or input("📱 شماره تلفن (با کد کشور): ").strip()
+PHONE = os.getenv("AIOSHAD_PHONE", "").strip()
+if not PHONE and sys.stdin.isatty():
+    PHONE = input("📱 شماره تلفن (با کد کشور): ").strip()
 
 app = Client(
     phone_number=PHONE,
-    session_directory="./sessions",
+    session_directory=SESSION_DIR,
     config=ClientConfig(
         timeout=30.0,
         poll_interval=1.5,
@@ -423,7 +431,10 @@ async def boot_banner():
 
 
 async def main():
-    log.info("🚀 شروع سلف...")
+    log.info(f"🚀 شروع سلف v{APP_VERSION}...")
+    if not PHONE:
+        log.error("❌ AIOSHAD_PHONE تنظیم نشده است")
+        return
 
     try:
         await app.connect()
